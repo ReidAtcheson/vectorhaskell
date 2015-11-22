@@ -74,18 +74,25 @@ main = do
   let n = read (args !! 1)::Int
   let nterms =  read  (args !! 2):: Int
   let mode= args !! 3
+  {-Generate seed arrays-}
   let x = listArray (1,n) [arrval+i | i<-[1..n]] :: UArray Int Int
   let y = listArray (1,n) [arrval+i | i<-[1..n]] :: UArray Int Int
   let zeros = listArray (1,n) (replicate n 0) :: UArray Int Int
+  {-Feed them into the Vector AST-}
   let vx = Vector x
   let vy = Vector y
   let zs = Vector zeros
+  {-Create large ASTs-}
   let vxs= [Scale i vx | i<-[1..nterms]]
   let vys= [Scale (i-1) vy | i<-[1..nterms]]
   let vvs= zipWith Sum vxs vys
   let vz = foldr Sum zs vvs
+  {-Naive evaluation of AST-}
   let h  = evalUArrayExpr vz
+  {-Optimized evaluation of AST-}
   let hopt=evalUArrayExprOpt (optVectorExpr vz)
+  {-Back out Haskell Unboxed Array-}
   let out= getUArray (if mode=="opt" then hopt else h)
+  {-Compute summary value to ensure nothing gets lazified-}
   let val= foldl' (+) 0 (elems out)
   print val
